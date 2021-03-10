@@ -1,24 +1,72 @@
-# %%
+from enum import Enum
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 
 
-def compute_gini(model):
-    agent_wealths = [agent.wealth for agent in model.schedule.agents]
-    x = sorted(agent_wealths)
-    N = model.num_agents
-    B = sum(xi * (N - i) for i, xi in enumerate(x)) / (N * sum(x))
-    return 1 + (1 / N) - 2 * B
+class State(Enum):
+    SUSCEPTIBLE = 0
+    INFECTED = 1
+    RESISTANT = 2
 
 
-class MoneyAgent(Agent):
-    """ An agent with fixed initial wealth."""
+def number_state(model, state):
+    return sum([1 for a in model.schedule.agents if a.state is state])
 
-    def __init__(self, unique_id, model):
+
+def number_infected(model):
+    return number_state(model, State.INFECTED)
+
+
+def number_susceptible(model):
+    return number_state(model, State.SUSCEPTIBLE)
+
+
+def number_resistant(model):
+    return number_state(model, State.RESISTANT)
+
+
+class CovidAgent(Agent):
+    def __init__(
+        self,
+        unique_id,
+        model,
+        initial_state,
+        virus_spread_chance,
+        recovery_chance,
+        resistance_chance,
+    ):
         super().__init__(unique_id, model)
-        self.wealth = 1
+        self.initial_state = initial_state
+        self.state = initial_state
+        self.spread_chance = virus_spread_chance
+        self.recovery_chance = recovery_chance
+        self.resistance_chance = resistance_chance
+
+    def try_to_infect(self):
+        neighboring_cells = self.model.grid.get_neighbors(
+            self.pos, moore=True, include_center=True
+        )
+
+        susceptible_neighbors = [
+            agent for agent in neighboring_cells if agent.state == State.SUSCEPTIBLE
+        ]
+
+        for neighbor in susceptible_neighbors:
+            if self.random.random() < self.spread_chance:
+                neighbor.state = State.INFECTED
+
+    def try_to_change_status(self):
+        if self.random.random() < self.recovery_chance:
+            # Agente se recuperou mas continua suscetível
+            self.state = State.SUSCEPTIBLE
+            # Mas ele consegue se tornar resistente?
+            if self.random.random() < self.resistance_chance:
+                self.state = State.RESISTANT
+        else:
+            # Agente continua infectado
+            self.state = State.INFECTED
 
     def move(self):
         possible_steps = self.model.grid.get_neighborhood(
@@ -27,31 +75,56 @@ class MoneyAgent(Agent):
         new_position = self.random.choice(possible_steps)
         self.model.grid.move_agent(self, new_position)
 
-    def give_money(self):
-        cellmates = self.model.grid.get_cell_list_contents([self.pos])
-        if len(cellmates) > 1:
-            other = self.random.choice(cellmates)
-            other.wealth += 1
-            self.wealth -= 1
-
     def step(self):
+        if self.state == State.INFECTED:
+            self.try_to_infect()
+            self.try_to_change_status()
+
         self.move()
-        if self.wealth > 0:
-            self.give_money()
 
 
-class MoneyModel(Model):
-    """A model with some number of agents."""
-
-    def __init__(self, N, width, height):
-        self.num_agents = N
+class CovidModel(Model):
+    def __init__(
+        self,
+        n_susceptible,
+        n_infected,
+        virus_spread_chance=0.40,
+        recovery_chance=0.04,
+        resistance_chance=0.005,
+        width=50,
+        height=50,
+    ):
+        self.num_susceptible = n_susceptible
+        self.num_infected = n_infected
+        self.total_agents = n_susceptible + n_infected
         self.grid = MultiGrid(width, height, True)
         self.schedule = RandomActivation(self)
+        self.virus_spread_chance = virus_spread_chance
+        self.recovery_chance = recovery_chance
+        self.resistance_chance = resistance_chance
         self.running = True
 
         # Create agents
-        for i in range(self.num_agents):
-            a = MoneyAgent(i, self)
+        for i in range(self.total_agents):
+            if i < self.num_infected:
+                a = CovidAgent(
+                    i,
+                    self,
+                    State.INFECTED,
+                    self.virus_spread_chance,
+                    self.recovery_chance,
+                    self.resistance_chance,
+                )
+            else:
+                a = CovidAgent(
+                    i,
+                    self,
+                    State.SUSCEPTIBLE,
+                    self.virus_spread_chance,
+                    self.recovery_chance,
+                    self.resistance_chance,
+                )
+
             self.schedule.add(a)
             # Add the agent to a random grid cell
             x = self.random.randrange(self.grid.width)
@@ -59,7 +132,11 @@ class MoneyModel(Model):
             self.grid.place_agent(a, (x, y))
 
         self.datacollector = DataCollector(
-            model_reporters={"Gini": compute_gini}, agent_reporters={"Wealth": "wealth"}
+            {
+                "Susceptible": number_susceptible,
+                "Infected": number_infected,
+                "Resistant": number_resistant,
+            }
         )
 
     def step(self):
