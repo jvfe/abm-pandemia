@@ -1,16 +1,20 @@
-# %%
 from model.model import CovidModel
 from mesa.batchrunner import BatchRunner
 
-# fixed_params = {"width": 10, "height": 10}
-# variable_params = {"N": range(10, 500, 10)}
+model = CovidModel(997, 3)
 
-model = CovidModel(997, 1)
-for i in range(10):
+# Rodar modelo por 10 iterações
+for _ in range(10):
     model.step()
 
 
 model.datacollector.get_model_vars_dataframe()
+
+# Para batch runs
+
+# fixed_params = {"width": 10, "height": 10}
+# variable_params = {"N": range(10, 500, 10)}
+
 
 # batch_run = BatchRunner(
 #     CovidModel,

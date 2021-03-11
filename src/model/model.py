@@ -104,7 +104,6 @@ class CovidModel(Model):
         self.resistance_chance = resistance_chance
         self.running = True
 
-        # Create agents
         for i in range(self.total_agents):
             if i < self.num_infected:
                 a = CovidAgent(
@@ -126,7 +125,7 @@ class CovidModel(Model):
                 )
 
             self.schedule.add(a)
-            # Add the agent to a random grid cell
+
             x = self.random.randrange(self.grid.width)
             y = self.random.randrange(self.grid.height)
             self.grid.place_agent(a, (x, y))
