@@ -84,6 +84,8 @@ class CovidAgent(Agent):
 
 
 class CovidModel(Model):
+    """A toy SIR model to simulate a pandemic"""
+
     def __init__(
         self,
         n_susceptible,
@@ -102,6 +104,7 @@ class CovidModel(Model):
         self.virus_spread_chance = virus_spread_chance
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
+
         self.running = True
 
         for i in range(self.total_agents):
