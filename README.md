@@ -18,7 +18,7 @@ pip install -r requirements.txt
 
 # Servir página web com o modelo
 cd src/
-python server.py
+mesa runserver
 
 ```
 

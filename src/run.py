@@ -1,5 +1,6 @@
 from model.model import CovidModel
 from mesa.batchrunner import BatchRunner
+from server import server
 
 model = CovidModel(997, 3)
 
@@ -10,7 +11,11 @@ for _ in range(10):
 
 data = model.datacollector.get_model_vars_dataframe()
 
-print(data)
+print(f"Rodando por 10 iterações:\n{data}")
+
+server.launch()
+
+
 # Para batch runs
 
 # fixed_params = {"width": 10, "height": 10}

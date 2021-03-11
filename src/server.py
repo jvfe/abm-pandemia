@@ -84,4 +84,3 @@ server = ModularServer(
     },
 )
 server.port = 8521
-server.launch()
