@@ -8,8 +8,9 @@ for _ in range(10):
     model.step()
 
 
-model.datacollector.get_model_vars_dataframe()
+data = model.datacollector.get_model_vars_dataframe()
 
+print(data)
 # Para batch runs
 
 # fixed_params = {"width": 10, "height": 10}
