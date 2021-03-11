@@ -1,4 +1,6 @@
+import tornado.web
 from model.model import CovidModel, State
+from visualization.Histogram import HistogramModule
 from mesa.visualization.modules import CanvasGrid, ChartModule
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import UserSettableParameter
@@ -34,9 +36,13 @@ chart = ChartModule(
     ],
     data_collector_name="datacollector",
 )
+
+histogram = HistogramModule(list(range(10)), 200, 500)
+
+
 server = ModularServer(
     CovidModel,
-    [grid, chart],
+    [grid, chart, histogram],
     "Agent-based pandemics simulation",
     {
         "n_susceptible": UserSettableParameter(
