@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, auto
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid
@@ -6,9 +6,10 @@ from mesa.datacollection import DataCollector
 
 
 class State(Enum):
-    SUSCEPTIBLE = 0
-    INFECTED = 1
-    RESISTANT = 2
+    SUSCEPTIBLE = auto()
+    EXPOSED = auto()
+    INFECTED = auto()
+    RESISTANT = auto()
 
 
 def number_state(model, state):
@@ -25,6 +26,10 @@ def number_susceptible(model):
 
 def number_resistant(model):
     return number_state(model, State.RESISTANT)
+
+
+def number_exposed(model):
+    return number_state(model, State.EXPOSED)
 
 
 class CovidAgent(Agent):
@@ -54,10 +59,9 @@ class CovidAgent(Agent):
         ]
 
         for neighbor in susceptible_neighbors:
-            if self.random.random() < self.spread_chance:
-                neighbor.state = State.INFECTED
+            neighbor.state = State.EXPOSED
 
-    def try_to_change_status(self):
+    def try_to_recover(self):
         if self.random.random() < self.recovery_chance:
             # Agente se recuperou mas continua suscetível
             self.state = State.SUSCEPTIBLE
@@ -68,6 +72,14 @@ class CovidAgent(Agent):
             # Agente continua infectado
             self.state = State.INFECTED
 
+    def check_if_virus_developed(self):
+        if self.random.random() < self.spread_chance:
+            # Checa se realmente foi infectado
+            self.state = State.INFECTED
+        else:
+            # Não foi
+            self.state = State.SUSCEPTIBLE
+
     def move(self):
         possible_steps = self.model.grid.get_neighborhood(
             self.pos, moore=True, include_center=False
@@ -76,9 +88,13 @@ class CovidAgent(Agent):
         self.model.grid.move_agent(self, new_position)
 
     def step(self):
+
         if self.state == State.INFECTED:
             self.try_to_infect()
-            self.try_to_change_status()
+            self.try_to_recover()
+
+        if self.state == State.EXPOSED:
+            self.check_if_virus_developed()
 
         self.move()
 
@@ -91,8 +107,8 @@ class CovidModel(Model):
         n_susceptible,
         n_infected,
         virus_spread_chance=0.40,
-        recovery_chance=0.04,
-        resistance_chance=0.005,
+        recovery_chance=0.20,
+        resistance_chance=0.01,
         width=50,
         height=50,
         seed=None,
@@ -137,6 +153,7 @@ class CovidModel(Model):
         self.datacollector = DataCollector(
             {
                 "Susceptible": number_susceptible,
+                "Exposed": number_exposed,
                 "Infected": number_infected,
                 "Resistant": number_resistant,
             }

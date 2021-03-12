@@ -19,11 +19,15 @@ def agent_portrayal(agent):
     elif agent.state == State.INFECTED:
         portrayal["Color"] = "#fc8d62"
         portrayal["Layer"] = 1
+        portrayal["r"] = 0.7
+    elif agent.state == State.EXPOSED:
+        portrayal["Color"] = "#cc00cc"
+        portrayal["Layer"] = 2
         portrayal["r"] = 0.6
     elif agent.state == State.RESISTANT:
         portrayal["Color"] = "#66c2a5"
-        portrayal["Layer"] = 2
-        portrayal["r"] = 0.5
+        portrayal["Layer"] = 3
+        portrayal["r"] = 0.4
     return portrayal
 
 
@@ -31,6 +35,7 @@ grid = CanvasGrid(agent_portrayal, 50, 50, 600, 600)
 chart = LineChart(
     [
         {"Label": "Susceptible", "Color": "#8da0cb"},
+        {"Label": "Exposed", "Color": "#cc00cc"},
         {"Label": "Infected", "Color": "#fc8d62"},
         {"Label": "Resistant", "Color": "#66c2a5"},
     ],
@@ -48,7 +53,7 @@ server = ModularServer(
             "Number of susceptible",
             997,
             500,
-            1200,
+            2000,
             1,
             description="Choose how many susceptible agents to include in the model",
         ),
@@ -57,7 +62,7 @@ server = ModularServer(
             "Number of infected",
             3,
             1,
-            1200,
+            2000,
             1,
             description="Choose how many infected agents to include in the model",
         ),
@@ -72,16 +77,16 @@ server = ModularServer(
         "recovery_chance": UserSettableParameter(
             "slider",
             "Recovery chance",
-            0.04,
-            0.01,
+            0.20,
+            0.1,
             1,
-            0.05,
+            0.1,
         ),
         "resistance_chance": UserSettableParameter(
             "slider",
             "Resistance chance",
-            0.005,
-            0.005,
+            0.01,
+            0.01,
             1,
             0.05,
         ),
