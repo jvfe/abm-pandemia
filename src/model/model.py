@@ -95,6 +95,7 @@ class CovidModel(Model):
         resistance_chance=0.005,
         width=50,
         height=50,
+        seed=None,
     ):
         self.num_susceptible = n_susceptible
         self.num_infected = n_infected

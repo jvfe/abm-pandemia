@@ -2,7 +2,7 @@ from model.model import CovidModel
 from mesa.batchrunner import BatchRunner
 from server import server
 
-model = CovidModel(997, 3)
+model = CovidModel(997, 3, seed=1024)
 
 # Rodar modelo por 10 iterações
 for _ in range(10):
@@ -14,20 +14,3 @@ data = model.datacollector.get_model_vars_dataframe()
 print(f"Rodando por 10 iterações:\n{data}")
 
 server.launch()
-
-
-# Para batch runs
-
-# fixed_params = {"width": 10, "height": 10}
-# variable_params = {"N": range(10, 500, 10)}
-
-
-# batch_run = BatchRunner(
-#     CovidModel,
-#     variable_params,
-#     fixed_params,
-#     iterations=5,
-#     max_steps=100,
-#     model_reporters={"Gini": compute_gini},
-# )
-# batch_run.run_all()
