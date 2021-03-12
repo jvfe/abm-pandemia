@@ -1,7 +1,7 @@
 import tornado.web
 from model.model import CovidModel, State
-from visualization.Histogram import HistogramModule
-from mesa.visualization.modules import CanvasGrid, ChartModule
+from visualization.LineChart import LineChart
+from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.UserParam import UserSettableParameter
 
@@ -28,7 +28,7 @@ def agent_portrayal(agent):
 
 
 grid = CanvasGrid(agent_portrayal, 50, 50, 600, 600)
-chart = ChartModule(
+chart = LineChart(
     [
         {"Label": "Susceptible", "Color": "Blue"},
         {"Label": "Infected", "Color": "Red"},
@@ -37,12 +37,10 @@ chart = ChartModule(
     data_collector_name="datacollector",
 )
 
-histogram = HistogramModule(list(range(10)), 200, 500)
-
 
 server = ModularServer(
     CovidModel,
-    [grid, chart, histogram],
+    [grid, chart],
     "Agent-based pandemics simulation",
     {
         "n_susceptible": UserSettableParameter(
