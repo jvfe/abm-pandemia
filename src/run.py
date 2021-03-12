@@ -13,4 +13,4 @@ data = model.datacollector.get_model_vars_dataframe()
 
 print(f"Rodando por 10 iterações:\n{data}")
 
-server.launch()
+server.launch(open_browser=False)

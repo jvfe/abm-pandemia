@@ -14,14 +14,14 @@ def agent_portrayal(agent):
     }
 
     if agent.state == State.SUSCEPTIBLE:
-        portrayal["Color"] = "blue"
+        portrayal["Color"] = "#8da0cb"
         portrayal["Layer"] = 0
     elif agent.state == State.INFECTED:
-        portrayal["Color"] = "red"
+        portrayal["Color"] = "#fc8d62"
         portrayal["Layer"] = 1
         portrayal["r"] = 0.6
     elif agent.state == State.RESISTANT:
-        portrayal["Color"] = "green"
+        portrayal["Color"] = "#66c2a5"
         portrayal["Layer"] = 2
         portrayal["r"] = 0.5
     return portrayal
@@ -30,9 +30,9 @@ def agent_portrayal(agent):
 grid = CanvasGrid(agent_portrayal, 50, 50, 600, 600)
 chart = LineChart(
     [
-        {"Label": "Susceptible", "Color": "Blue"},
-        {"Label": "Infected", "Color": "Red"},
-        {"Label": "Resistant", "Color": "Green"},
+        {"Label": "Susceptible", "Color": "#8da0cb"},
+        {"Label": "Infected", "Color": "#fc8d62"},
+        {"Label": "Resistant", "Color": "#66c2a5"},
     ],
     data_collector_name="datacollector",
 )
