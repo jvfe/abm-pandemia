@@ -15,18 +15,22 @@ def agent_portrayal(agent):
 
     if agent.state == State.SUSCEPTIBLE:
         portrayal["Color"] = "#8da0cb"
-        portrayal["Layer"] = 0
+        portrayal["Layer"] = 1
     elif agent.state == State.INFECTED:
         portrayal["Color"] = "#fc8d62"
-        portrayal["Layer"] = 1
+        portrayal["Layer"] = 2
         portrayal["r"] = 0.7
     elif agent.state == State.EXPOSED:
         portrayal["Color"] = "#cc00cc"
-        portrayal["Layer"] = 2
+        portrayal["Layer"] = 3
         portrayal["r"] = 0.6
     elif agent.state == State.RESISTANT:
         portrayal["Color"] = "#66c2a5"
-        portrayal["Layer"] = 3
+        portrayal["Layer"] = 4
+        portrayal["r"] = 0.4
+    elif agent.state == State.DEAD:
+        portrayal["Color"] = "#676767"
+        portrayal["Layer"] = 0
         portrayal["r"] = 0.4
     return portrayal
 
@@ -38,6 +42,7 @@ chart = LineChart(
         {"Label": "Exposed", "Color": "#cc00cc"},
         {"Label": "Infected", "Color": "#fc8d62"},
         {"Label": "Resistant", "Color": "#66c2a5"},
+        {"Label": "Dead", "Color": "#676767"},
     ],
     data_collector_name="datacollector",
 )
@@ -89,6 +94,14 @@ server = ModularServer(
             0.01,
             1,
             0.05,
+        ),
+        "fatality_rate": UserSettableParameter(
+            "slider",
+            "Fatality rate",
+            0.024,
+            0.01,
+            1,
+            0.1,
         ),
     },
 )

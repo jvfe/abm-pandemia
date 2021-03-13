@@ -10,6 +10,7 @@ class State(Enum):
     EXPOSED = auto()
     INFECTED = auto()
     RESISTANT = auto()
+    DEAD = auto()
 
 
 def number_state(model, state):
@@ -32,6 +33,10 @@ def number_exposed(model):
     return number_state(model, State.EXPOSED)
 
 
+def number_dead(model):
+    return number_state(model, State.DEAD)
+
+
 class CovidAgent(Agent):
     def __init__(
         self,
@@ -41,6 +46,7 @@ class CovidAgent(Agent):
         virus_spread_chance,
         recovery_chance,
         resistance_chance,
+        fatality_rate,
     ):
         super().__init__(unique_id, model)
         self.initial_state = initial_state
@@ -48,6 +54,7 @@ class CovidAgent(Agent):
         self.spread_chance = virus_spread_chance
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
+        self.fatality_rate = fatality_rate
 
     def try_to_infect(self):
         neighboring_cells = self.model.grid.get_neighbors(
@@ -68,6 +75,9 @@ class CovidAgent(Agent):
             # Mas ele consegue se tornar resistente?
             if self.random.random() < self.resistance_chance:
                 self.state = State.RESISTANT
+        elif self.random.random() < self.fatality_rate:
+            # Se falhou na recuperação, ver se evolui para um caso fatal
+            self.state = State.DEAD
         else:
             # Agente continua infectado
             self.state = State.INFECTED
@@ -96,7 +106,8 @@ class CovidAgent(Agent):
         if self.state == State.EXPOSED:
             self.check_if_virus_developed()
 
-        self.move()
+        if self.state != State.DEAD:
+            self.move()
 
 
 class CovidModel(Model):
@@ -109,6 +120,7 @@ class CovidModel(Model):
         virus_spread_chance=0.40,
         recovery_chance=0.20,
         resistance_chance=0.01,
+        fatality_rate=0.024,
         width=50,
         height=50,
         seed=None,
@@ -121,6 +133,7 @@ class CovidModel(Model):
         self.virus_spread_chance = virus_spread_chance
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
+        self.fatality_rate = fatality_rate
 
         self.running = True
 
@@ -133,6 +146,7 @@ class CovidModel(Model):
                     self.virus_spread_chance,
                     self.recovery_chance,
                     self.resistance_chance,
+                    self.fatality_rate,
                 )
             else:
                 a = CovidAgent(
@@ -142,6 +156,7 @@ class CovidModel(Model):
                     self.virus_spread_chance,
                     self.recovery_chance,
                     self.resistance_chance,
+                    self.fatality_rate,
                 )
 
             self.schedule.add(a)
@@ -156,6 +171,7 @@ class CovidModel(Model):
                 "Exposed": number_exposed,
                 "Infected": number_infected,
                 "Resistant": number_resistant,
+                "Dead": number_dead,
             }
         )
 
