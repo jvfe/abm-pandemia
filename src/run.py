@@ -1,11 +1,10 @@
 from model.model import CovidModel
 from mesa.batchrunner import BatchRunner
-from server import server
+
+# from server import server
 
 modelo_normal = CovidModel(1200, 3, seed=1024)
-modelo_variante = CovidModel(
-    1200, 3, virus_spread_chance=0.559, fatality_rate=0.0288, seed=1024
-)
+modelo_variante = CovidModel(1200, 3, seed=1024)
 
 for _ in range(2000):
     modelo_normal.step()
@@ -26,4 +25,4 @@ print(f"Rodando modelo normal por 2000 iterações:\n{data_variante}")
 
 data_variante.to_csv("../data/modelo_variante_dados.csv")
 
-server.launch(open_browser=False)
+# server.launch(open_browser=False)

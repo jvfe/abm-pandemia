@@ -13,6 +13,22 @@ class State(Enum):
     DEAD = auto()
 
 
+class Virus:
+    def __init__(self, spread_chance, fatality_rate):
+        self.spread_chance = spread_chance
+        self.fatality_rate = fatality_rate
+
+
+class Common(Virus):
+    def __init__(self):
+        super().__init__(0.40, 0.024)
+
+
+class Variant(Virus):
+    def __init__(self):
+        super().__init__(0.559, 0.0288)
+
+
 def number_state(model, state):
     return sum([1 for a in model.schedule.agents if a.state is state])
 
@@ -43,18 +59,29 @@ class CovidAgent(Agent):
         unique_id,
         model,
         initial_state,
-        virus_spread_chance,
+        virus,
         recovery_chance,
         resistance_chance,
-        fatality_rate,
     ):
         super().__init__(unique_id, model)
         self.initial_state = initial_state
         self.state = initial_state
-        self.spread_chance = virus_spread_chance
+        self.virus = virus
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
-        self.fatality_rate = fatality_rate
+
+    @property
+    def virus(self):
+        return self._virus
+
+    @virus.setter
+    def virus(self, value):
+        if value is not None:
+            self._virus = value
+            self.spread_chance = value.spread_chance
+            self.fatality_rate = value.fatality_rate
+        else:
+            self._virus = None
 
     def try_to_infect(self):
         neighboring_cells = self.model.grid.get_neighbors(
@@ -67,6 +94,7 @@ class CovidAgent(Agent):
 
         for neighbor in susceptible_neighbors:
             neighbor.state = State.EXPOSED
+            neighbor.virus = self.virus
 
     def try_to_recover(self):
         if self.random.random() < self.recovery_chance:
@@ -117,10 +145,8 @@ class CovidModel(Model):
         self,
         n_susceptible,
         n_infected,
-        virus_spread_chance=0.40,
         recovery_chance=0.20,
         resistance_chance=0.01,
-        fatality_rate=0.024,
         width=50,
         height=50,
         seed=None,
@@ -130,10 +156,8 @@ class CovidModel(Model):
         self.total_agents = n_susceptible + n_infected
         self.grid = MultiGrid(width, height, True)
         self.schedule = RandomActivation(self)
-        self.virus_spread_chance = virus_spread_chance
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
-        self.fatality_rate = fatality_rate
 
         self.running = True
 
@@ -143,20 +167,18 @@ class CovidModel(Model):
                     i,
                     self,
                     State.INFECTED,
-                    self.virus_spread_chance,
+                    Common(),
                     self.recovery_chance,
                     self.resistance_chance,
-                    self.fatality_rate,
                 )
             else:
                 a = CovidAgent(
                     i,
                     self,
                     State.SUSCEPTIBLE,
-                    self.virus_spread_chance,
+                    None,
                     self.recovery_chance,
                     self.resistance_chance,
-                    self.fatality_rate,
                 )
 
             self.schedule.add(a)
