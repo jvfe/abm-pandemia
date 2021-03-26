@@ -3,6 +3,7 @@ from mesa import Agent, Model
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
+from numpy import interp
 
 
 class State(Enum):
@@ -13,31 +14,46 @@ class State(Enum):
     DEAD = auto()
 
 
-class Virus:
-    def __init__(self, spread_chance, fatality_rate):
-        self.spread_chance = spread_chance
-        self.fatality_rate = fatality_rate
+class Variables(Enum):
+    SPREAD_CHANCE = 0.40
+    FATALITY_RATE = 0.024
 
 
-class Common(Virus):
+class Common:
     def __init__(self):
-        super().__init__(0.40, 0.024)
+        self.spread_chance = Variables.SPREAD_CHANCE.value
+        self.fatality_rate = Variables.FATALITY_RATE.value
 
 
-# TODO: Adicionar fator mutacional da variante
-# -> Transformar fator mutacional numa property que define
-# spread_chance e fatality_chance
-class Variant(Virus):
-    def __init__(self):
-        super().__init__(0.559, 0.0288)
+class Variant:
+    def __init__(self, mutation_factor):
+        self.spread_chance = Variables.SPREAD_CHANCE.value
+        self.fatality_rate = Variables.FATALITY_RATE.value
+        self.spread_range = Variables.SPREAD_CHANCE.value / 2
+        self.fatality_range = Variables.SPREAD_CHANCE.value / 4
+        self.mutation_factor = mutation_factor
+
+    @property
+    def mutation_factor(self):
+        return self._mutation_factor
+
+    @mutation_factor.setter
+    def mutation_factor(self, value):
+        self._mutation_factor = value
+
+        spread_mutation = self.interp_mutation(value, self.spread_range)
+        fatality_mutation = self.interp_mutation(value, self.fatality_range)
+
+        self.spread_chance = self.spread_chance + spread_mutation
+        self.fatality_rate = self.fatality_rate + fatality_mutation
+
+    def interp_mutation(self, value, attribute):
+
+        return interp(value, [-1, 1], [-attribute, attribute])
 
 
 def number_state(model, state):
     return sum([1 for a in model.schedule.agents if a.state is state])
-
-
-def number_virus_type(model, virus_class):
-    return sum([1 for a in model.schedule.agents if isinstance(a.virus, virus_class)])
 
 
 def number_infected(model):
@@ -60,30 +76,23 @@ def number_dead(model):
     return number_state(model, State.DEAD)
 
 
-def number_commontype(model):
-    return number_virus_type(model, Common)
-
-
-def number_varianttype(model):
-    return number_virus_type(model, Variant)
-
-
 class CovidAgent(Agent):
     def __init__(
         self,
         unique_id,
         model,
         initial_state,
-        virus,
         recovery_chance,
         resistance_chance,
+        insert_variant=False,
     ):
         super().__init__(unique_id, model)
         self.initial_state = initial_state
         self.state = initial_state
-        self.virus = virus
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
+        self.insert_variant = insert_variant
+        self.virus = insert_variant
 
     @property
     def virus(self):
@@ -91,10 +100,14 @@ class CovidAgent(Agent):
 
     @virus.setter
     def virus(self, value):
-        if value is not None:
-            self._virus = value
-            self.spread_chance = value.spread_chance
-            self.fatality_rate = value.fatality_rate
+        if value == True:
+            self._virus = Variant(self.random.uniform(-1.0, 1.0))
+            self.spread_chance = self._virus.spread_chance
+            self.fatality_rate = self._virus.fatality_rate
+        elif value == False:
+            self._virus = Common()
+            self.spread_chance = self._virus.spread_chance
+            self.fatality_rate = self._virus.fatality_rate
         else:
             self._virus = None
 
@@ -109,7 +122,8 @@ class CovidAgent(Agent):
 
         for neighbor in susceptible_neighbors:
             neighbor.state = State.EXPOSED
-            neighbor.virus = self.virus
+            neighbor.insert_variant = self.insert_variant
+            neighbor.virus = self.insert_variant
 
     def try_to_recover(self):
         if self.random.random() < self.recovery_chance:
@@ -160,10 +174,9 @@ class CovidModel(Model):
         self,
         n_susceptible,
         n_infected,
-        recovery_chance=0.20,
+        insert_variant,
+        recovery_chance=0.2,
         resistance_chance=0.01,
-        variant_iteration=None,
-        n_variant_infected=None,
         width=50,
         height=50,
         seed=None,
@@ -175,9 +188,6 @@ class CovidModel(Model):
         self.schedule = RandomActivation(self)
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
-        self.variant_iteration = variant_iteration
-        self.n_variant_infected = n_variant_infected
-        self.iteration = 0
         self.running = True
 
         for i in range(self.total_agents):
@@ -186,16 +196,15 @@ class CovidModel(Model):
                     i,
                     self,
                     State.INFECTED,
-                    Common(),
                     self.recovery_chance,
                     self.resistance_chance,
+                    insert_variant,
                 )
             else:
                 a = CovidAgent(
                     i,
                     self,
                     State.SUSCEPTIBLE,
-                    None,
                     self.recovery_chance,
                     self.resistance_chance,
                 )
@@ -213,23 +222,9 @@ class CovidModel(Model):
                 "Infected": number_infected,
                 "Resistant": number_resistant,
                 "Dead": number_dead,
-                "Common": number_commontype,
-                "Variant": number_varianttype,
             }
         )
 
     def step(self):
-        self.iteration += 1
-
-        if self.iteration == self.variant_iteration:
-            number = (
-                self.n_variant_infected if self.n_variant_infected is not None else 3
-            )
-            variants = self.random.sample(
-                [a for a in self.schedule.agents if a.state != State.DEAD], number
-            )
-            for variant in variants:
-                variant.virus = Variant()
-
         self.datacollector.collect(self)
         self.schedule.step()
