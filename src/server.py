@@ -1,5 +1,5 @@
 import tornado.web
-from model.model import CovidModel, State
+from model.model import CovidModel, State, Common, Variant
 from visualization.LineChart import LineChart
 from mesa.visualization.modules import CanvasGrid
 from mesa.visualization.ModularVisualization import ModularServer
@@ -17,9 +17,12 @@ def agent_portrayal(agent):
         portrayal["Color"] = "#8da0cb"
         portrayal["Layer"] = 1
     elif agent.state == State.INFECTED:
-        portrayal["Color"] = "#fc8d62"
         portrayal["Layer"] = 2
         portrayal["r"] = 0.7
+        if isinstance(agent.virus, Common):
+            portrayal["Color"] = "#fc8d62"
+        elif isinstance(agent.virus, Variant):
+            portrayal["Color"] = "#fc6284"
     elif agent.state == State.EXPOSED:
         portrayal["Color"] = "#cc00cc"
         portrayal["Layer"] = 3
@@ -71,14 +74,7 @@ server = ModularServer(
             1,
             description="Choose how many infected agents to include in the model",
         ),
-        "virus_spread_chance": UserSettableParameter(
-            "slider",
-            "Viral spread chance",
-            0.4,
-            0.1,
-            1,
-            0.05,
-        ),
+        "variant_iteration": 100,
         "recovery_chance": UserSettableParameter(
             "slider",
             "Recovery chance",
@@ -94,14 +90,6 @@ server = ModularServer(
             0.01,
             1,
             0.05,
-        ),
-        "fatality_rate": UserSettableParameter(
-            "slider",
-            "Fatality rate",
-            0.024,
-            0.01,
-            1,
-            0.1,
         ),
     },
 )

@@ -24,6 +24,9 @@ class Common(Virus):
         super().__init__(0.40, 0.024)
 
 
+# TODO: Adicionar fator mutacional da variante
+# -> Transformar fator mutacional numa property que define
+# spread_chance e fatality_chance
 class Variant(Virus):
     def __init__(self):
         super().__init__(0.559, 0.0288)
@@ -31,6 +34,10 @@ class Variant(Virus):
 
 def number_state(model, state):
     return sum([1 for a in model.schedule.agents if a.state is state])
+
+
+def number_virus_type(model, virus_class):
+    return sum([1 for a in model.schedule.agents if isinstance(a.virus, virus_class)])
 
 
 def number_infected(model):
@@ -51,6 +58,14 @@ def number_exposed(model):
 
 def number_dead(model):
     return number_state(model, State.DEAD)
+
+
+def number_commontype(model):
+    return number_virus_type(model, Common)
+
+
+def number_varianttype(model):
+    return number_virus_type(model, Variant)
 
 
 class CovidAgent(Agent):
@@ -147,6 +162,8 @@ class CovidModel(Model):
         n_infected,
         recovery_chance=0.20,
         resistance_chance=0.01,
+        variant_iteration=None,
+        n_variant_infected=None,
         width=50,
         height=50,
         seed=None,
@@ -158,7 +175,9 @@ class CovidModel(Model):
         self.schedule = RandomActivation(self)
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
-
+        self.variant_iteration = variant_iteration
+        self.n_variant_infected = n_variant_infected
+        self.iteration = 0
         self.running = True
 
         for i in range(self.total_agents):
@@ -194,9 +213,23 @@ class CovidModel(Model):
                 "Infected": number_infected,
                 "Resistant": number_resistant,
                 "Dead": number_dead,
+                "Common": number_commontype,
+                "Variant": number_varianttype,
             }
         )
 
     def step(self):
+        self.iteration += 1
+
+        if self.iteration == self.variant_iteration:
+            number = (
+                self.n_variant_infected if self.n_variant_infected is not None else 3
+            )
+            variants = self.random.sample(
+                [a for a in self.schedule.agents if a.state != State.DEAD], number
+            )
+            for variant in variants:
+                variant.virus = Variant()
+
         self.datacollector.collect(self)
         self.schedule.step()
