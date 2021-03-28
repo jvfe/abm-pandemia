@@ -19,10 +19,7 @@ def agent_portrayal(agent):
     elif agent.state == State.INFECTED:
         portrayal["Layer"] = 2
         portrayal["r"] = 0.7
-        if isinstance(agent.virus, Common):
-            portrayal["Color"] = "#fc8d62"
-        elif isinstance(agent.virus, Variant):
-            portrayal["Color"] = "#fc6284"
+        portrayal["Color"] = "#fc8d62"
     elif agent.state == State.EXPOSED:
         portrayal["Color"] = "#cc00cc"
         portrayal["Layer"] = 3
@@ -74,7 +71,6 @@ server = ModularServer(
             1,
             description="Choose how many infected agents to include in the model",
         ),
-        "variant_iteration": 100,
         "recovery_chance": UserSettableParameter(
             "slider",
             "Recovery chance",
@@ -91,6 +87,7 @@ server = ModularServer(
             1,
             0.05,
         ),
+        "insert_variant": UserSettableParameter("checkbox", "With Variants", False),
     },
 )
 server.port = 8521
