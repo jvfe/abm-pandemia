@@ -22,7 +22,9 @@ for _ in range(2000):
     modelo_variante.step()
 
 data_variante = modelo_variante.datacollector.get_model_vars_dataframe()
-
 print(f"Rodando modelo variante por 2000 iterações:\n{data_variante}")
 
+data_agentes_variante = modelo_variante.datacollector.get_agent_vars_dataframe()
+
 data_variante.to_csv("../data/modelo_variante_dados.csv")
+data_agentes_variante.to_csv("../data/agentes_variante.csv")

@@ -153,13 +153,17 @@ class CovidModel(Model):
             self.grid.place_agent(a, (x, y))
 
         self.datacollector = DataCollector(
-            {
+            model_reporters={
                 "Susceptible": number_susceptible,
                 "Exposed": number_exposed,
                 "Infected": number_infected,
                 "Resistant": number_resistant,
                 "Dead": number_dead,
-            }
+            },
+            agent_reporters={
+                "spread_chance": "spread_chance",
+                "fatality_rate": "fatality_rate",
+            },
         )
 
     def step(self):
