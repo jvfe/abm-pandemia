@@ -1,79 +1,16 @@
-from enum import Enum, auto
 from mesa import Agent, Model
 from mesa.time import RandomActivation
 from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
-from numpy import interp
-
-
-class State(Enum):
-    SUSCEPTIBLE = auto()
-    EXPOSED = auto()
-    INFECTED = auto()
-    RESISTANT = auto()
-    DEAD = auto()
-
-
-class Variables(Enum):
-    SPREAD_CHANCE = 0.40
-    FATALITY_RATE = 0.024
-
-
-class Common:
-    def __init__(self):
-        self.spread_chance = Variables.SPREAD_CHANCE.value
-        self.fatality_rate = Variables.FATALITY_RATE.value
-
-
-class Variant:
-    def __init__(self, mutation_factor):
-        self.spread_chance = Variables.SPREAD_CHANCE.value
-        self.fatality_rate = Variables.FATALITY_RATE.value
-        self.spread_range = Variables.SPREAD_CHANCE.value / 2
-        self.fatality_range = Variables.SPREAD_CHANCE.value / 4
-        self.mutation_factor = mutation_factor
-
-    @property
-    def mutation_factor(self):
-        return self._mutation_factor
-
-    @mutation_factor.setter
-    def mutation_factor(self, value):
-        self._mutation_factor = value
-
-        spread_mutation = self.interp_mutation(value, self.spread_range)
-        fatality_mutation = self.interp_mutation(value, self.fatality_range)
-
-        self.spread_chance = self.spread_chance + spread_mutation
-        self.fatality_rate = self.fatality_rate + fatality_mutation
-
-    def interp_mutation(self, value, attribute):
-
-        return interp(value, [-1, 1], [-attribute, attribute])
-
-
-def number_state(model, state):
-    return sum([1 for a in model.schedule.agents if a.state is state])
-
-
-def number_infected(model):
-    return number_state(model, State.INFECTED)
-
-
-def number_susceptible(model):
-    return number_state(model, State.SUSCEPTIBLE)
-
-
-def number_resistant(model):
-    return number_state(model, State.RESISTANT)
-
-
-def number_exposed(model):
-    return number_state(model, State.EXPOSED)
-
-
-def number_dead(model):
-    return number_state(model, State.DEAD)
+from .virus import Common, Variant
+from .state import (
+    State,
+    number_dead,
+    number_infected,
+    number_exposed,
+    number_resistant,
+    number_susceptible,
+)
 
 
 class CovidAgent(Agent):
