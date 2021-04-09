@@ -88,6 +88,39 @@ server = ModularServer(
             0.05,
         ),
         "insert_variant": UserSettableParameter("checkbox", "With Variants", False),
+        "variation_chance": UserSettableParameter(
+            "slider",
+            "Variation chance",
+            0.01,
+            0.01,
+            1,
+            0.05,
+        ),
+        "spread_chance": UserSettableParameter(
+            "slider",
+            "Spread chance",
+            0.01,
+            0.01,
+            1,
+            0.05,
+        ),
+        "fatality_rate": UserSettableParameter(
+            "slider",
+            "Fatality rate",
+            0.01,
+            0.01,
+            1,
+            0.05,
+        ),
+        "min_time_recovery": UserSettableParameter(
+            "slider",
+            "Minimum recovery time",
+            1,
+            1,
+            100,
+            1,
+        ),
+
     },
 )
 server.port = 8521
