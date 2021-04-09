@@ -120,7 +120,14 @@ server = ModularServer(
             100,
             1,
         ),
-
+        "move_chance": UserSettableParameter(
+            "slider",
+            "Chance of an agent moving each turn",
+            0.5,
+            0.1,
+            1,
+            0.1,
+        ),
     },
 )
 server.port = 8521

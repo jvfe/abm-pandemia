@@ -19,13 +19,15 @@ class CovidAgent(Agent):
         unique_id,
         model,
         initial_state,
+        move_chance,
         recovery_chance,
         resistance_chance,
-        virus=None
+        virus=None,
     ):
         super().__init__(unique_id, model)
         self.initial_state = initial_state
         self.state = initial_state
+        self.move_chance = move_chance
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
         self.virus = virus
@@ -39,11 +41,17 @@ class CovidAgent(Agent):
     @virus.setter
     def virus(self, value):
         # Caso seja uma variante do virus
-        if isinstance(value, Variant) :
+        if isinstance(value, Variant):
             # Se ele passar no teste de mutação
             if self.random.random() < value.variation_chance:
                 # É criado uma nova versão do virus com novos valores, baseados no virus original
-                self._virus = Variant(value.spread_chance, value.fatality_rate, value.min_time_to_recover, self.random.uniform(-1.0, 1.0), value.variation_chance)
+                self._virus = Variant(
+                    value.spread_chance,
+                    value.fatality_rate,
+                    value.min_time_to_recover,
+                    self.random.uniform(-1.0, 1.0),
+                    value.variation_chance,
+                )
             else:
                 # Senão, o virus original que é usado
                 self._virus = value
@@ -71,7 +79,7 @@ class CovidAgent(Agent):
 
         for neighbor in susceptible_neighbors:
             # Caso o agente não tenha resistencia a esse virus
-            if(self.virus not in neighbor.resistances):
+            if self.virus not in neighbor.resistances:
                 # Ele fica exposto ao virus
                 neighbor.state = State.EXPOSED
                 neighbor.virus = self.virus
@@ -80,7 +88,7 @@ class CovidAgent(Agent):
         # Adiciona mais uma unidade para o tempo de infecção
         self.time_infected += 1
         # Verifica se o agente já pode tentar se recuperar
-        if(self.time_infected >= self.virus.min_time_to_recover):
+        if self.time_infected >= self.virus.min_time_to_recover:
             if self.random.random() < self.recovery_chance:
                 # Agente se recuperou mas continua suscetível
                 self.state = State.SUSCEPTIBLE
@@ -121,7 +129,8 @@ class CovidAgent(Agent):
             self.check_if_virus_developed()
 
         if self.state != State.DEAD:
-            self.move()
+            if self.random.random() < self.move_chance:
+                self.move()
 
 
 class CovidModel(Model):
@@ -136,6 +145,7 @@ class CovidModel(Model):
         fatality_rate,
         variation_chance,
         min_time_recovery,
+        move_chance,
         recovery_chance=0.2,
         resistance_chance=0.01,
         width=50,
@@ -147,35 +157,49 @@ class CovidModel(Model):
         self.total_agents = n_susceptible + n_infected
         self.grid = MultiGrid(width, height, True)
         self.schedule = RandomActivation(self)
+        self.move_chance = move_chance
         self.recovery_chance = recovery_chance
         self.resistance_chance = resistance_chance
         self.running = True
-        if(insert_variant):
-            virus = Variant(spread_chance, fatality_rate, min_time_recovery, self.random.uniform(-1.0, 1.0), variation_chance)
+
+        if insert_variant:
+            virus = Variant(
+                spread_chance,
+                fatality_rate,
+                min_time_recovery,
+                self.random.uniform(-1.0, 1.0),
+                variation_chance,
+            )
         else:
             virus = Common(spread_chance, fatality_rate, min_time_recovery)
+
         for i in range(self.total_agents):
             if i < self.num_infected:
                 a = CovidAgent(
                     i,
                     self,
                     State.INFECTED,
+                    self.move_chance,
                     self.recovery_chance,
                     self.resistance_chance,
                     virus,
                 )
+
             else:
                 a = CovidAgent(
                     i,
                     self,
                     State.SUSCEPTIBLE,
+                    self.move_chance,
                     self.recovery_chance,
                     self.resistance_chance,
                 )
+
             self.schedule.add(a)
             x = self.random.randrange(self.grid.width)
             y = self.random.randrange(self.grid.height)
             self.grid.place_agent(a, (x, y))
+
         self.datacollector = DataCollector(
             model_reporters={
                 "Susceptible": number_susceptible,
