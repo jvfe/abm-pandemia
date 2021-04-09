@@ -2,10 +2,28 @@ from model.model import CovidModel
 from mesa.batchrunner import BatchRunner
 
 modelo_normal = CovidModel(
-    1500, 3, insert_variant=False, width=60, height=60, seed=1024
+    1500,
+    3,
+    spread_chance=0.4,
+    fatality_rate=0.024,
+    variation_chance=0.01,
+    min_time_recovery=1,
+    insert_variant=False,
+    width=60,
+    height=60,
+    seed=1024,
 )
 modelo_variante = CovidModel(
-    1500, 3, insert_variant=True, width=60, height=60, seed=1024
+    1500,
+    3,
+    spread_chance=0.4,
+    fatality_rate=0.024,
+    variation_chance=0.01,
+    min_time_recovery=1,
+    insert_variant=True,
+    width=60,
+    height=60,
+    seed=1024,
 )
 
 for _ in range(2000):
