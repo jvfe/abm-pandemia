@@ -1,25 +1,22 @@
 from enum import Enum
 from numpy import interp
 
-
-class Variables(Enum):
-    SPREAD_CHANCE = 0.40
-    FATALITY_RATE = 0.024
-
-
 class Common:
-    def __init__(self):
-        self.spread_chance = Variables.SPREAD_CHANCE.value
-        self.fatality_rate = Variables.FATALITY_RATE.value
+    def __init__(self, spread_chance, fatality_rate, min_time_to_recover):
+        self.spread_chance = spread_chance
+        self.fatality_rate = fatality_rate
+        self.min_time_to_recover = min_time_to_recover
 
 
 class Variant:
-    def __init__(self, mutation_factor):
-        self.spread_chance = Variables.SPREAD_CHANCE.value
-        self.fatality_rate = Variables.FATALITY_RATE.value
-        self.spread_range = Variables.SPREAD_CHANCE.value / 2
-        self.fatality_range = Variables.SPREAD_CHANCE.value / 4
+    def __init__(self, spread_chance, fatality_rate, min_time_to_recover, mutation_factor, variation_chance):
+        self.spread_chance = spread_chance
+        self.fatality_rate = fatality_rate
+        self.min_time_to_recover = min_time_to_recover
+        self.spread_range = spread_chance / 2
+        self.fatality_range = fatality_rate / 2
         self.mutation_factor = mutation_factor
+        self.variation_chance = variation_chance
 
     @property
     def mutation_factor(self):
@@ -36,5 +33,4 @@ class Variant:
         self.fatality_rate = self.fatality_rate + fatality_mutation
 
     def interp_mutation(self, value, attribute):
-
         return interp(value, [-1, 1], [-attribute, attribute])
