@@ -10,6 +10,8 @@ class State(Enum):
 
 
 def number_state(model, state):
+    if(state is State.RESISTANT):
+        return sum([1 for a in model.schedule.agents if a.state is not State.DEAD and len(a.resistances) > 0])
     return sum([1 for a in model.schedule.agents if a.state is state])
 
 
