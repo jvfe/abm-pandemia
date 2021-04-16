@@ -1,0 +1,35 @@
+---
+title: "Análise dos agentes"
+author: "João Vitor F Cavalcante"
+date: "16/04/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(readr)
+library(ggplot2)
+```
+
+
+Vamos ver como foi a distribuição de transmissibilidade entre as linhagens presentes na simulação com variantes e sem lockdown.
+
+```{r}
+variaveis_agentes <- read_csv("../data/agentes_variante.csv")
+
+plot <- variaveis_agentes %>% 
+  filter(Step == 499) %>% 
+  ggplot(aes(x = fatality_rate)) +
+  geom_density(color = "coral", size = 1.2) +
+  labs(x = "Transmissibilidade", y = "Densidade") +
+  theme_light(base_family = "Roboto")
+
+plot
+
+ggsave("transmissibilidade_plot.png", plot = plot, width = 8, height = 6)
+```
+
