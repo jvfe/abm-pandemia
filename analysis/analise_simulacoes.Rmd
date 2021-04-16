@@ -1,0 +1,94 @@
+---
+title: "Análise das simulações"
+author: "João Vitor F Cavalcante"
+date: "16/04/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Primeiro, carregamos os pacotes necessários.
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(fs)
+library(purrr)
+library(readr)
+library(ggplot2)
+library(patchwork)
+```
+
+## Leitura e transformação
+
+Lendo os dados, a nomenclatura dos arquivos é importante, veja se realmente são idênticos aos baixados do GitHub.
+
+```{r}
+read_modelcollector <- function(filepath, type, lockdown) {
+  read_csv(filepath, n_max = 400) %>%
+    rename(iteration = X1) %>%
+    pivot_longer(-iteration, names_to = "state", values_to = "quantity") %>%
+    mutate(type = type,
+           lockdown = lockdown)
+}
+
+model_data <- dir_ls("../data/", glob = "../data/modelo*csv")
+types <- c("Comum", "Comum", "Variante", "Variante")
+lockdown <- c("N", "Y", "N", "Y")
+
+dataset <-
+  pmap(list(model_data, types, lockdown), read_modelcollector)
+
+```
+
+## Vamos fazer alguns gráficos!
+
+```{r}
+cols <-
+  c(
+    "Dead" = "#676767",
+    "Exposed" = "#cc00cc",
+    "Infected" = "#fc8d62",
+    "Resistant" = "#66c2a5",
+    "Susceptible" = "#8da0cb"
+  )
+
+plotar_simulacoes <- function(dataset, title = "") {
+  ggplot(dataset, aes(x = iteration, y = quantity, color = state)) +
+    geom_line(size = 1.25) +
+    theme_light(base_family = "Roboto") +
+    scale_colour_manual(values = cols) +
+    labs(x = "Iteration", y = "# of agents", color = "State", title = title)
+}
+```
+
+Vemos que mesmo a simulação contendo variantes na modalidade "lockdown" apresenta uma dinâmica mais danosa que o modelo sem variantes e sem lockdown.
+
+```{r}
+plotar_simulacoes(dataset[[1]], "Modelo sem variantes e sem lockdown")
+```
+
+```{r}
+plotar_simulacoes(dataset[[4]], "Modelo com variantes e com lockdown")
+```
+
+Ok, agora vamos rodar para o dataset inteiro e guardar os resultados!
+
+Legenda:
+I - Modelo sem variantes e sem lockdown;
+II - Modelo sem variantes e com lockdown;
+III - Modelo com variantes e sem lockdown;
+IV - Modelo com variantes e com lockdown;
+
+```{r}
+plots <- map(dataset, ~plotar_simulacoes(.x))
+
+final_plot <- wrap_plots(plots) +
+  plot_layout(guides = "collect") +
+  plot_annotation(tag_levels = 'I')
+
+ggsave("simulacoes_plot.png", plot = final_plot, width = 8, height = 6)
+```
+
