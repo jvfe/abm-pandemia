@@ -23,7 +23,7 @@ variaveis_agentes <- read_csv("../data/agentes_variante.csv")
 
 plot <- variaveis_agentes %>% 
   filter(Step == 499) %>% 
-  ggplot(aes(x = fatality_rate)) +
+  ggplot(aes(x = spread_chance)) +
   geom_density(color = "coral", size = 1.2) +
   labs(x = "Transmissibilidade", y = "Densidade") +
   theme_light(base_family = "Roboto")
